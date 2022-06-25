@@ -23,10 +23,10 @@ namespace Kursova_robota_API.Controllers
             _logger = logger;
         }
         [HttpGet("GetAll")]
-        public List<Recipe> Recipe(string Recipe, string ApiKey)
+        public List<ResultItem> Recipe(string Recipe, string MessageChatId)
         {
-            FoodClient client = new FoodClient();
-            return client.GetFoodRecipeAsync(Recipe, ApiKey).Result;
+            FoodClient client = new FoodClient(_dynamoDbClient);
+            return client.GetFoodRecipeAsync(Recipe, MessageChatId).Result;
         }
         [HttpPost("AddtoFavorites")]
         public async Task<ActionResult> AddtoFavorites([FromBody] RecipeDbRepository recipe)
@@ -78,15 +78,30 @@ namespace Kursova_robota_API.Controllers
             }
             return Ok("Values has been successfully deleted from DB");
         }
-            /*[HttpGet("GetDiet")]
-            public async Task<List<RecipeDbRepository>> GetDietAsync([FromQuery] string MessageChatId)
+            [HttpGet("GetDiet")]
+            public async Task<string> GetDietAsync([FromQuery] string MessageChatId)
             {
-                var result = await _dynamoDbClient.GetByMessageChatId(MessageChatId);
+                var result = await _dynamoDbClient.GetDietByMessageChatId(MessageChatId);
                 if (result == null)
                 {
                     return null;
                 }
                 return result;
-            }*/
+            }
+        [HttpPost("AddDiet")]
+        public async Task<ActionResult> AddtoFavorites([FromBody] DietDbRepository diet)
+        {
+            var data = new DietDbRepository
+            {
+                MessageChatId = diet.MessageChatId,
+                Diet = diet.Diet
+            };
+            var result = await _dynamoDbClient.PostDietToDb(data);
+            if (result == false)
+            {
+                return BadRequest("Cannot insert diet to database. Please see console log");
+            }
+            return Ok("Diet has been successfully added to DB");
         }
+    }
 }

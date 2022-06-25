@@ -13,13 +13,14 @@ namespace Kursova_robota_API.Client
     public class DynamoDbClient : IDynamoDbClient, IDisposable
     {
         public string _tableName;
+        public string _dietTableName;
         private readonly IAmazonDynamoDB _dynamoDb;
         public DynamoDbClient(IAmazonDynamoDB dynamoDB)
         {
             _dynamoDb = dynamoDB;
             _tableName = Constants.tableName;
+            _dietTableName = Constants.dietTableName;
         }
-
         public async Task<bool> DeleteFromFavorites(RecipeDbRepository data)
         {
             var request = new DeleteItemRequest
@@ -58,21 +59,21 @@ namespace Kursova_robota_API.Client
             return response.Items.ConvertAll(item => item.ToClass<RecipeDbRepository>());
         }
 
-        public async Task<RecipeDbRepository> GetDietByMessageChatId(string messageChatId)
+        public async Task<string> GetDietByMessageChatId(string messageChatId)
         {
             var item = new GetItemRequest
             {
-                TableName = _tableName,
+                TableName = _dietTableName,
                 Key = new Dictionary<string, AttributeValue>
                 {
                     {"MessageChatId", new AttributeValue{S = messageChatId } }
                 }
             };
             var response = await _dynamoDb.GetItemAsync(item);
-            if (response.Item == null || !response.IsItemSet)
+            if (response == null || response.Item == null || !response.IsItemSet)
                 return null;
-            var result = response.Item.ToClass<RecipeDbRepository>();
-            return result;
+            var result = response.Item.ToClass<DietDbRepository>();
+            return result.Diet;
         }
         public async Task<bool> PostDataToDb(RecipeDbRepository data)
         {
@@ -97,10 +98,6 @@ namespace Kursova_robota_API.Client
             }
         }
 
-        public Task UpdateDataIntoDb()
-        {
-            throw new NotImplementedException();
-        }
         public async Task<bool> ClearFavoritesByMessageChatId(string MessageChatId)
         {
             DynamoDBContext context = new DynamoDBContext(_dynamoDb);
@@ -129,10 +126,32 @@ namespace Kursova_robota_API.Client
             }
             return result;
         }*/
+        public async Task<bool> PostDietToDb(DietDbRepository data)
+        {
+            var request = new PutItemRequest
+            {
+                TableName = _dietTableName,
+                Item = new Dictionary<string, AttributeValue>
+                {
+                    {"MessageChatId", new AttributeValue{S= data.MessageChatId} },
+                    {"Diet", new AttributeValue{S= data.Diet} }
+                }
+            };
+            try
+            {
+                var response = await _dynamoDb.PutItemAsync(request);
+                return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Here  is your error \n" + e);
+                return false;
+            }
+        }
 
         public void Dispose()
         {
-            _dynamoDb.Dispose();
+            throw new NotImplementedException();
         }
     }
 }
