@@ -28,11 +28,11 @@ namespace Kursova_robota_API.Client
             _client.DefaultRequestHeaders.Add("X-RapidAPI-Host", _address.Substring(8));
             _client.DefaultRequestHeaders.Add("X-RapidAPI-Key", _apikey);
         }
-        public async Task<List<ResultItem>> GetFoodRecipeAsync(string recipe, string messageChatId)
+        public async Task<List<ResultItem>> GetFoodRecipeAsync(string recipe, string messageChatId, bool ignoreDiet)
         {
             HttpResponseMessage responce;
             string diet = await _dynamoDb.GetDietByMessageChatId(messageChatId);
-            if (diet != null && diet.Length != 0)
+            if (!ignoreDiet && diet != null && diet.Length != 0)
             {
                 responce = await _client.GetAsync($"/recipes/list?from=0&size=10&tags={diet}&q={recipe}");
             }

@@ -23,10 +23,10 @@ namespace Kursova_robota_API.Controllers
             _logger = logger;
         }
         [HttpGet("GetAll")]
-        public List<ResultItem> Recipe(string Recipe, string MessageChatId)
+        public List<ResultItem> Recipe(string Recipe, string MessageChatId, bool ignoreDiet)
         {
             FoodClient client = new FoodClient(_dynamoDbClient);
-            return client.GetFoodRecipeAsync(Recipe, MessageChatId).Result;
+            return client.GetFoodRecipeAsync(Recipe, MessageChatId, ignoreDiet).Result;
         }
         [HttpPost("AddtoFavorites")]
         public async Task<ActionResult> AddtoFavorites([FromBody] RecipeDbRepository recipe)
